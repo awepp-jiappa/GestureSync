@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GestureSync</string>
+    <string name="accessibility_service_label">GestureSync Remote Control</string>
+    <string name="accessibility_service_description">Receive gestures from your watch and perform swipe or tap gestures on the phone screen.</string>
+</resources>
