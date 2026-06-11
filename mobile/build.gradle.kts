@@ -20,5 +20,4 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        j
+    kotlin
