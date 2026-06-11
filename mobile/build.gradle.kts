@@ -8,11 +8,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.awesomepp.gesturesync.mobile"
+        applicationId = "com.awesomepp.gesturesync"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
     }
 
     compileOptions {
@@ -21,11 +21,4 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "17"
-    }
-}
-
-dependencies {
-    implementation(project(":shared"))
-    implementation("com.google.android.gms:play-services-wearable:18.2.0")
-}
+        j
