@@ -10,6 +10,7 @@ import android.media.AudioManager
 import android.os.Build
 import com.awesomepp.gesturesync.shared.GestureSyncContract
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 
 class GestureWearListenerService : WearableListenerService() {
@@ -23,6 +24,7 @@ class GestureWearListenerService : WearableListenerService() {
         when (messageEvent.path) {
             GestureSyncContract.PATH_OPEN_PHONE_APP -> {
                 showModeNotification(GestureSyncContract.MODE_GESTURE)
+                sendKeepScreenOnSettingToWatch()
                 openPhoneApp()
             }
             GestureSyncContract.PATH_MODE_CHANGED -> {
@@ -56,6 +58,24 @@ class GestureWearListenerService : WearableListenerService() {
             adjustDirection,
             AudioManager.FLAG_SHOW_UI
         )
+    }
+
+    private fun sendKeepScreenOnSettingToWatch() {
+        val enabled = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_KEEP_SCREEN_ON, false)
+        val payload = if (enabled) GestureSyncContract.VALUE_ON else GestureSyncContract.VALUE_OFF
+        val nodeClient = Wearable.getNodeClient(this)
+        val messageClient = Wearable.getMessageClient(this)
+
+        nodeClient.connectedNodes.addOnSuccessListener { nodes ->
+            nodes.forEach { node ->
+                messageClient.sendMessage(
+                    node.id,
+                    GestureSyncContract.PATH_KEEP_SCREEN_ON_CHANGED,
+                    payload.toByteArray(Charsets.UTF_8)
+                )
+            }
+        }
     }
 
     private fun openPhoneApp() {
@@ -163,5 +183,7 @@ class GestureWearListenerService : WearableListenerService() {
         private const val MODE_CHANNEL_ID = "gesture_sync_mode"
         private const val OPEN_APP_CHANNEL_ID = "gesture_sync_open_app"
         private const val MODE_NOTIFICATION_ID = 2001
+        private const val PREFS_NAME = "gesture_sync_settings"
+        private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
     }
 }
