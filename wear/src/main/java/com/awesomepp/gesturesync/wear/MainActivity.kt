@@ -21,7 +21,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(createGesturePad())
-        updateStatus("준비됨")
+        updateStatusText("READY")
         sendCommand(GestureSyncContract.PATH_OPEN_PHONE_APP)
         sendCommand(GestureSyncContract.PATH_MODE_CHANGED, currentMode)
     }
@@ -29,8 +29,7 @@ class MainActivity : Activity() {
     private fun createGesturePad(): View {
         statusText = TextView(this).apply {
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            textSize = 16f
-            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 15f
         }
 
         return FrameLayout(this).apply {
@@ -55,29 +54,26 @@ class MainActivity : Activity() {
                 downTime = event.eventTime
                 return true
             }
+
             MotionEvent.ACTION_UP -> {
                 val dx = event.x - downX
                 val dy = event.y - downY
-                val elapsed = event.eventTime - downTime
+                val duration = event.eventTime - downTime
                 val tapThreshold = 36f
                 val swipeThreshold = 70f
-                val longPressMillis = 650L
 
-                if (elapsed >= longPressMillis && abs(dx) < tapThreshold && abs(dy) < tapThreshold) {
+                if (duration >= LONG_PRESS_MS && abs(dx) < swipeThreshold && abs(dy) < swipeThreshold) {
                     toggleMode()
                     return true
                 }
 
                 if (abs(dx) < tapThreshold && abs(dy) < tapThreshold) {
-                    updateStatus("TAP")
-                    if (currentMode == GestureSyncContract.MODE_GESTURE) {
-                        sendCommand(GestureSyncContract.PATH_TAP)
-                    }
+                    handleTap()
                     return true
                 }
 
                 if (abs(dx) < swipeThreshold && abs(dy) < swipeThreshold) {
-                    updateStatus("짧은 입력 무시")
+                    updateStatusText("TOO SHORT")
                     return true
                 }
 
@@ -87,15 +83,7 @@ class MainActivity : Activity() {
                     if (dy > 0) GestureSyncContract.DIRECTION_DOWN else GestureSyncContract.DIRECTION_UP
                 }
 
-                updateStatus(direction)
-
-                if (currentMode == GestureSyncContract.MODE_VOLUME) {
-                    if (direction == GestureSyncContract.DIRECTION_UP || direction == GestureSyncContract.DIRECTION_DOWN) {
-                        sendCommand(GestureSyncContract.PATH_VOLUME, direction)
-                    }
-                } else {
-                    sendCommand(GestureSyncContract.PATH_SWIPE, direction)
-                }
+                handleSwipe(direction)
                 return true
             }
         }
@@ -108,24 +96,45 @@ class MainActivity : Activity() {
         } else {
             GestureSyncContract.MODE_GESTURE
         }
-        updateStatus("모드 변경")
+        updateStatusText("MODE CHANGED")
         sendCommand(GestureSyncContract.PATH_MODE_CHANGED, currentMode)
     }
 
-    private fun updateStatus(action: String) {
-        val modeTitle = if (currentMode == GestureSyncContract.MODE_VOLUME) {
-            "VOLUME MODE"
-        } else {
-            "GESTURE MODE"
+    private fun handleTap() {
+        updateStatusText("TAP")
+        if (currentMode == GestureSyncContract.MODE_GESTURE) {
+            sendCommand(GestureSyncContract.PATH_TAP)
+        }
+    }
+
+    private fun handleSwipe(direction: String) {
+        if (currentMode == GestureSyncContract.MODE_VOLUME) {
+            when (direction) {
+                GestureSyncContract.DIRECTION_UP -> {
+                    updateStatusText("VOLUME UP")
+                    sendCommand(GestureSyncContract.PATH_VOLUME, direction)
+                }
+                GestureSyncContract.DIRECTION_DOWN -> {
+                    updateStatusText("VOLUME DOWN")
+                    sendCommand(GestureSyncContract.PATH_VOLUME, direction)
+                }
+                else -> updateStatusText("VOLUME MODE\nUP/DOWN only")
+            }
+            return
         }
 
+        updateStatusText(direction)
+        sendCommand(GestureSyncContract.PATH_SWIPE, direction)
+    }
+
+    private fun updateStatusText(action: String) {
+        val modeLabel = if (currentMode == GestureSyncContract.MODE_VOLUME) "VOLUME" else "GESTURE"
         val help = if (currentMode == GestureSyncContract.MODE_VOLUME) {
             "위/아래: 볼륨 조절\n길게 누름: 제스처 모드"
         } else {
-            "스와이프: 폰 제스처\n탭: 중앙 탭\n길게 누름: 볼륨 모드"
+            "스와이프: 폰 제어\n탭: 중앙 탭\n길게 누름: 볼륨 모드"
         }
-
-        statusText.text = "GestureSync\n\n$modeTitle\n$action\n\n$help"
+        statusText.text = "GestureSync\n\nMODE: $modeLabel\n$action\n\n$help"
     }
 
     private fun sendCommand(path: String, payload: String = "") {
@@ -146,5 +155,9 @@ class MainActivity : Activity() {
             .addOnFailureListener {
                 statusText.text = "전송 실패: ${it.message ?: "unknown"}"
             }
+    }
+
+    companion object {
+        private const val LONG_PRESS_MS = 650L
     }
 }
