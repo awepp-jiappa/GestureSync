@@ -21,6 +21,22 @@
         android:text="1. 접근성 서비스를 켜세요.\n2. 워치 앱을 실행하세요.\n3. 워치에서 스와이프하면 이 폰에 제스처가 실행됩니다."
         android:textSize="16sp" />
 
+    <Switch
+        android:id="@+id/keepScreenOnSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="워치 화면 꺼짐 방지"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/keepScreenOnDescriptionText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="ON이면 GestureSync 워치 앱 실행 중 화면이 꺼지지 않습니다."
+        android:textSize="13sp" />
+
     <Button
         android:id="@+id/openAccessibilityButton"
         android:layout_width="match_parent"
