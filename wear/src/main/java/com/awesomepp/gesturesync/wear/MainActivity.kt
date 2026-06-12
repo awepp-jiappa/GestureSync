@@ -4,9 +4,12 @@ import android.app.Activity
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.awesomepp.gesturesync.shared.GestureSyncContract
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import kotlin.math.abs
 
@@ -16,20 +19,36 @@ class MainActivity : Activity() {
     private var downY = 0f
     private var downTime = 0L
     private var currentMode = GestureSyncContract.MODE_GESTURE
+    private var keepScreenOnEnabled = false
     private lateinit var statusText: TextView
+
+    private val watchMessageListener = MessageClient.OnMessageReceivedListener { messageEvent ->
+        if (messageEvent.path == GestureSyncContract.PATH_KEEP_SCREEN_ON_CHANGED) {
+            val value = messageEvent.data.toString(Charsets.UTF_8)
+            applyKeepScreenOn(value == GestureSyncContract.VALUE_ON)
+            updateStatusText("PHONE SETTING RECEIVED")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Wearable.getMessageClient(this).addListener(watchMessageListener)
         setContentView(createGesturePad())
         updateStatusText("READY")
         sendCommand(GestureSyncContract.PATH_OPEN_PHONE_APP)
         sendCommand(GestureSyncContract.PATH_MODE_CHANGED, currentMode)
     }
 
+    override fun onDestroy() {
+        Wearable.getMessageClient(this).removeListener(watchMessageListener)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        super.onDestroy()
+    }
+
     private fun createGesturePad(): View {
         statusText = TextView(this).apply {
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            textSize = 15f
+            textSize = 14f
         }
 
         return FrameLayout(this).apply {
@@ -127,14 +146,24 @@ class MainActivity : Activity() {
         sendCommand(GestureSyncContract.PATH_SWIPE, direction)
     }
 
+    private fun applyKeepScreenOn(enabled: Boolean) {
+        keepScreenOnEnabled = enabled
+        if (enabled) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     private fun updateStatusText(action: String) {
         val modeLabel = if (currentMode == GestureSyncContract.MODE_VOLUME) "VOLUME" else "GESTURE"
+        val screenLabel = if (keepScreenOnEnabled) "ON" else "OFF"
         val help = if (currentMode == GestureSyncContract.MODE_VOLUME) {
             "위/아래: 볼륨 조절\n길게 누름: 제스처 모드"
         } else {
             "스와이프: 폰 제어\n탭: 중앙 탭\n길게 누름: 볼륨 모드"
         }
-        statusText.text = "GestureSync\n\nMODE: $modeLabel\n$action\n\n$help"
+        statusText.text = "GestureSync\n\nMODE: $modeLabel\nSCREEN ON: $screenLabel\n$action\n\n$help"
     }
 
     private fun sendCommand(path: String, payload: String = "") {
