@@ -6,9 +6,13 @@ object GestureSyncContract {
     const val PATH_TAP = "/gesturesync/tap"
     const val PATH_MODE_CHANGED = "/gesturesync/mode-changed"
     const val PATH_VOLUME = "/gesturesync/volume"
+    const val PATH_KEEP_SCREEN_ON_CHANGED = "/gesturesync/keep-screen-on-changed"
 
     const val MODE_GESTURE = "GESTURE"
     const val MODE_VOLUME = "VOLUME"
+
+    const val VALUE_ON = "ON"
+    const val VALUE_OFF = "OFF"
 
     const val DIRECTION_UP = "UP"
     const val DIRECTION_DOWN = "DOWN"
