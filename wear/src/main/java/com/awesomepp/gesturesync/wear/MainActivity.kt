@@ -2,6 +2,8 @@ package com.awesomepp.gesturesync.wear
 
 import android.app.Activity
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
@@ -115,8 +117,19 @@ class MainActivity : Activity() {
         } else {
             GestureSyncContract.MODE_GESTURE
         }
+        vibrateModeChanged()
         updateStatusText("MODE CHANGED")
         sendCommand(GestureSyncContract.PATH_MODE_CHANGED, currentMode)
+    }
+
+    private fun vibrateModeChanged() {
+        val vibrator = getSystemService(Vibrator::class.java) ?: return
+        vibrator.vibrate(
+            VibrationEffect.createOneShot(
+                MODE_CHANGE_VIBRATION_MS,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            )
+        )
     }
 
     private fun handleTap() {
@@ -188,5 +201,6 @@ class MainActivity : Activity() {
 
     companion object {
         private const val LONG_PRESS_MS = 650L
+        private const val MODE_CHANGE_VIBRATION_MS = 80L
     }
 }
