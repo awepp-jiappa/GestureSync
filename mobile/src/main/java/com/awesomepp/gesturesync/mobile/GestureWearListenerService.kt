@@ -92,12 +92,25 @@ class GestureWearListenerService : WearableListenerService() {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(
                 NotificationChannel(
-                    MODE_CHANNEL_ID,
+                    MODE_STATUS_CHANNEL_ID,
                     "GestureSync Status",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
                     description = "GestureSync current mode status"
                     setShowBadge(false)
+                }
+            )
+
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    MODE_POPUP_CHANNEL_ID,
+                    "GestureSync Mode Popup",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "GestureSync mode change popup notification"
+                    setShowBadge(false)
+                    enableVibration(false)
+                    setSound(null, null)
                 }
             )
 
@@ -132,22 +145,43 @@ class GestureWearListenerService : WearableListenerService() {
             "제스처 모드"
         }
 
-        val notificationBuilder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, MODE_CHANNEL_ID)
+        val statusNotificationBuilder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, MODE_STATUS_CHANNEL_ID)
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
         }
 
-        val notification = notificationBuilder
+        val statusNotification = statusNotificationBuilder
             .setSmallIcon(android.R.drawable.ic_menu_manage)
             .setContentTitle("GestureSync 실행 중")
             .setContentText("현재 모드: $modeLabel")
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setPriority(Notification.PRIORITY_LOW)
             .build()
 
-        manager.notify(MODE_NOTIFICATION_ID, notification)
+        manager.notify(MODE_STATUS_NOTIFICATION_ID, statusNotification)
+
+        val popupNotificationBuilder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, MODE_POPUP_CHANNEL_ID)
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+        }
+
+        val popupNotification = popupNotificationBuilder
+            .setSmallIcon(android.R.drawable.ic_menu_manage)
+            .setContentTitle("GestureSync 모드 변경")
+            .setContentText("현재 모드: $modeLabel")
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setCategory(Notification.CATEGORY_STATUS)
+            .setPriority(Notification.PRIORITY_HIGH)
+            .setTimeoutAfter(MODE_POPUP_TIMEOUT_MS)
+            .build()
+
+        manager.notify(MODE_POPUP_NOTIFICATION_ID, popupNotification)
     }
 
     private fun showOpenAppNotification(intent: Intent) {
@@ -180,9 +214,12 @@ class GestureWearListenerService : WearableListenerService() {
     }
 
     companion object {
-        private const val MODE_CHANNEL_ID = "gesture_sync_mode"
+        private const val MODE_STATUS_CHANNEL_ID = "gesture_sync_mode"
+        private const val MODE_POPUP_CHANNEL_ID = "gesture_sync_mode_popup_v2"
         private const val OPEN_APP_CHANNEL_ID = "gesture_sync_open_app"
-        private const val MODE_NOTIFICATION_ID = 2001
+        private const val MODE_STATUS_NOTIFICATION_ID = 2001
+        private const val MODE_POPUP_NOTIFICATION_ID = 2002
+        private const val MODE_POPUP_TIMEOUT_MS = 3_000L
         private const val PREFS_NAME = "gesture_sync_settings"
         private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
     }
