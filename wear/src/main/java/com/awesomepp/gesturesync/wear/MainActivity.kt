@@ -172,9 +172,9 @@ class MainActivity : Activity() {
         val modeLabel = if (currentMode == GestureSyncContract.MODE_VOLUME) "VOLUME" else "GESTURE"
         val screenLabel = if (keepScreenOnEnabled) "ON" else "OFF"
         val help = if (currentMode == GestureSyncContract.MODE_VOLUME) {
-            "위/아래: 볼륨 조절\n길게 누름: 제스처 모드"
+            "위/아래: 볼륨 조절\n3초 누름: 제스처 모드"
         } else {
-            "스와이프: 폰 제어\n탭: 중앙 탭\n길게 누름: 볼륨 모드"
+            "스와이프: 폰 제어\n탭: 중앙 탭\n3초 누름: 볼륨 모드"
         }
         statusText.text = "GestureSync\n\nMODE: $modeLabel\nSCREEN ON: $screenLabel\n$action\n\n$help"
     }
@@ -200,7 +200,7 @@ class MainActivity : Activity() {
     }
 
     companion object {
-        private const val LONG_PRESS_MS = 650L
+        private const val LONG_PRESS_MS = 3_000L
         private const val MODE_CHANGE_VIBRATION_MS = 80L
     }
 }
